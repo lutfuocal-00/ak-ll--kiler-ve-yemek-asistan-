@@ -38,13 +38,17 @@ export interface RecipeData {
   usedIngredients: string[];
 }
 
+export interface RecipeResponse {
+  recipes: RecipeData[];
+}
+
 export async function generateRecipe(
   pantryItems: string[],
   category: string | null,
   quickRecipeQuery: string | null,
   dietaryPreference: string = 'Standart',
   unitPreference: string = 'Metrik'
-): Promise<RecipeData> {
+): Promise<RecipeData[]> {
   let prompt = "";
   
   if (quickRecipeQuery) {
@@ -54,16 +58,19 @@ export async function generateRecipe(
   } else {
     prompt = `Eldeki malzemeler: ${pantryItems.join(", ")}.\n`;
     if (category) prompt += `Kategori: ${category}\n`;
-    prompt += `Bu malzemelerle güzel bir tarif ver. Temel malzemeler (tuz, yağ vb.) eklenebilir.\n`;
+    prompt += `Bu malzemelerle güzel tarifler ver. Temel malzemeler (tuz, yağ vb.) eklenebilir.\n`;
   }
 
   prompt += `Beslenme Tercihi: ${dietaryPreference}\n`;
   prompt += `Ölçü Birimi: ${unitPreference}\n\n`;
 
-  prompt += `Lütfen cevabını JSON formatında ver:
+  prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 4 FARKLI yemek tarifi seçeneği sun. Tarifler birbirinden olabildiğince farklı olsun.
+ÖNEMLİ: Malzeme miktarlarında çok dikkatli ol. Yumurta, soğan, patates, diş sarımsak gibi adetle kullanılan malzemelerde ASLA 1.2, 0.5 gibi küsuratlı sayılar kullanma, daima tam sayı (1, 2, 3 vb.) kullan.
+JSON Formatı:
+"recipes" adında bir dizi (array) döndür. Her bir tarif objesi şu alanları içermeli:
 1. "title": Tarifin adı.
 2. "basePortion": Bu tarifin kaç kişilik olduğu (sayısal, örn: 2).
-3. "ingredients": Malzemeler listesi. Her biri için "name" (isim), "amount" (sayısal miktar, yoksa 0), "unit" (birim: su bardağı, gram, adet vb.).
+3. "ingredients": Malzemeler listesi. Her biri için "name" (isim), "amount" (sayısal miktar, tam sayı olmalı), "unit" (birim: su bardağı, gram, adet vb.).
 4. "instructions": Yapılış adımları (Markdown formatında).
 5. "macros": 1 porsiyon için tahmini besin değerleri ("calories", "protein", "carbs", "fat" - hepsi sayısal).
 6. "usedIngredients": Eldeki malzemelerden (verilen listeden) tarifte kullanılanların tam isimlerini içeren bir dizi. Kullanılmadıysa boş dizi.`;
@@ -76,37 +83,47 @@ export async function generateRecipe(
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          title: { type: Type.STRING },
-          basePortion: { type: Type.NUMBER },
-          ingredients: {
+          recipes: {
             type: Type.ARRAY,
+            description: "Tam olarak 4 farklı yemek tarifi seçeneği.",
             items: {
               type: Type.OBJECT,
               properties: {
-                name: { type: Type.STRING },
-                amount: { type: Type.NUMBER },
-                unit: { type: Type.STRING }
+                title: { type: Type.STRING },
+                basePortion: { type: Type.NUMBER },
+                ingredients: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      name: { type: Type.STRING },
+                      amount: { type: Type.NUMBER, description: "Miktar. Yumurta, soğan gibi sayılabilen şeyler için KESİNLİKLE tam sayı kullanın." },
+                      unit: { type: Type.STRING }
+                    },
+                    required: ["name", "amount", "unit"]
+                  }
+                },
+                instructions: { type: Type.STRING },
+                macros: {
+                  type: Type.OBJECT,
+                  properties: {
+                    calories: { type: Type.NUMBER },
+                    protein: { type: Type.NUMBER },
+                    carbs: { type: Type.NUMBER },
+                    fat: { type: Type.NUMBER }
+                  },
+                  required: ["calories", "protein", "carbs", "fat"]
+                },
+                usedIngredients: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING }
+                }
               },
-              required: ["name", "amount", "unit"]
+              required: ["title", "basePortion", "ingredients", "instructions", "macros", "usedIngredients"]
             }
-          },
-          instructions: { type: Type.STRING },
-          macros: {
-            type: Type.OBJECT,
-            properties: {
-              calories: { type: Type.NUMBER },
-              protein: { type: Type.NUMBER },
-              carbs: { type: Type.NUMBER },
-              fat: { type: Type.NUMBER }
-            },
-            required: ["calories", "protein", "carbs", "fat"]
-          },
-          usedIngredients: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
           }
         },
-        required: ["title", "basePortion", "ingredients", "instructions", "macros", "usedIngredients"],
+        required: ["recipes"],
       },
     },
   });
@@ -114,5 +131,6 @@ export async function generateRecipe(
   const text = response.text;
   if (!text) throw new Error("Tarif oluşturulamadı.");
   
-  return JSON.parse(text) as RecipeData;
+  const parsed = JSON.parse(text) as RecipeResponse;
+  return parsed.recipes;
 }

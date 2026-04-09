@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, ChefHat, Search, CheckCircle2, Utensils, Coffee, Sun, Moon, CakeSlice, Loader2, X, Camera, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Minus, Flame, Droplets, Wheat, Activity, Settings, Instagram, ChevronDown, Download } from 'lucide-react';
+import { Plus, Trash2, ChefHat, Search, CheckCircle2, Utensils, Coffee, Sun, Moon, CakeSlice, Loader2, X, Camera, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Minus, Flame, Droplets, Wheat, Activity, Settings, Instagram, ChevronDown, Download, RefreshCw, ArrowLeft } from 'lucide-react';
 import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import { generateRecipe, detectIngredientsFromImage, RecipeData } from './lib/gemini';
@@ -36,7 +36,8 @@ export default function App() {
   const [category, setCategory] = useState<string | null>(null);
   const [quickSearch, setQuickSearch] = useState('');
   
-  const [recipeData, setRecipeData] = useState<RecipeData | null>(null);
+  const [recipeOptions, setRecipeOptions] = useState<RecipeData[] | null>(null);
+  const [selectedRecipeIndex, setSelectedRecipeIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -127,7 +128,7 @@ export default function App() {
     return () => {
       window.speechSynthesis.cancel();
     };
-  }, [recipeData]);
+  }, [recipeOptions, selectedRecipeIndex]);
 
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,7 +237,8 @@ export default function App() {
 
     setIsLoading(true);
     setError(null);
-    setRecipeData(null);
+    setRecipeOptions(null);
+    setSelectedRecipeIndex(null);
     window.speechSynthesis.cancel();
     setIsSpeaking(false);
 
@@ -248,8 +250,7 @@ export default function App() {
         dietaryPreference,
         unitPreference
       );
-      setRecipeData(data);
-      setPortion(data.basePortion || 2);
+      setRecipeOptions(data);
     } catch (err) {
       setError('Tarif oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
       console.error(err);
@@ -267,11 +268,14 @@ export default function App() {
     });
     setXp(prev => prev + 50);
 
+    const recipeData = selectedRecipeIndex !== null && recipeOptions ? recipeOptions[selectedRecipeIndex] : null;
+
     if (recipeData && recipeData.usedIngredients.length > 0) {
       const usedSet = new Set(recipeData.usedIngredients.map(i => i.toLowerCase()));
       setPantry(pantry.filter(item => !usedSet.has(item.toLowerCase())));
     }
-    setRecipeData(null);
+    setRecipeOptions(null);
+    setSelectedRecipeIndex(null);
     setQuickSearch('');
     window.speechSynthesis.cancel();
     setIsSpeaking(false);
@@ -502,15 +506,62 @@ export default function App() {
               </div>
             )}
 
+            {/* Recipe Options */}
+            {recipeOptions && selectedRecipeIndex === null && (
+              <div className="bg-white dark:bg-stone-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-orange-100/50 dark:border-stone-700 animate-in fade-in slide-in-from-bottom-4 duration-500 transition-colors">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                    <ChefHat className="text-orange-500" />
+                    Önerilen Tarifler
+                  </h2>
+                  <button 
+                    onClick={() => handleGenerateRecipe(!!quickSearch)} 
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 rounded-xl hover:bg-orange-200 dark:hover:bg-orange-900/70 transition-colors shrink-0"
+                  >
+                    <RefreshCw size={18} />
+                    <span>Yenile</span>
+                  </button>
+                </div>
+                
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {recipeOptions.map((recipe, idx) => (
+                    <button 
+                      key={idx} 
+                      onClick={() => {
+                        setSelectedRecipeIndex(idx);
+                        setPortion(recipe.basePortion || 2);
+                      }} 
+                      className="text-left p-5 border border-stone-200 dark:border-stone-700 rounded-2xl hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-stone-700/50 transition-all group"
+                    >
+                      <h3 className="font-semibold text-lg text-stone-800 dark:text-stone-200 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{recipe.title}</h3>
+                      <div className="flex items-center gap-3 mt-3 text-sm text-stone-500 dark:text-stone-400">
+                        <span className="flex items-center gap-1"><Flame size={14} /> {recipe.macros.calories} kcal</span>
+                        <span className="flex items-center gap-1"><Utensils size={14} /> {recipe.basePortion} Kişilik</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Recipe Result */}
-            {recipeData && (
+            {recipeOptions && selectedRecipeIndex !== null && (
               <div className="bg-white dark:bg-stone-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-orange-100/50 dark:border-stone-700 animate-in fade-in slide-in-from-bottom-4 duration-500 transition-colors">
                 
                 {/* Header & Actions */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                  <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">{recipeData.title}</h1>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setSelectedRecipeIndex(null)}
+                      className="p-2 bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-600 rounded-xl transition-colors"
+                      aria-label="Geri Dön"
+                    >
+                      <ArrowLeft size={20} />
+                    </button>
+                    <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">{recipeOptions[selectedRecipeIndex].title}</h1>
+                  </div>
                   <button
-                    onClick={() => toggleSpeaking(recipeData.instructions)}
+                    onClick={() => toggleSpeaking(recipeOptions[selectedRecipeIndex].instructions)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0 ${
                       isSpeaking 
                         ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400' 
@@ -551,8 +602,8 @@ export default function App() {
                   <div>
                     <h2 className="text-lg font-semibold mb-4 text-stone-800 dark:text-stone-200">Malzemeler</h2>
                     <ul className="space-y-3">
-                      {recipeData.ingredients.map((ing, idx) => {
-                        const ratio = portion / (recipeData.basePortion || 2);
+                      {recipeOptions[selectedRecipeIndex].ingredients.map((ing, idx) => {
+                        const ratio = portion / (recipeOptions[selectedRecipeIndex].basePortion || 2);
                         const adjustedAmount = ing.amount ? (ing.amount * ratio).toFixed(1).replace('.0', '') : '';
                         return (
                           <li key={idx} className="flex items-start gap-3 text-stone-700 dark:text-stone-300">
@@ -575,23 +626,23 @@ export default function App() {
                       <span className="text-xs font-normal text-stone-400 ml-auto">(1 Porsiyon)</span>
                     </h2>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                      <MacroBar label="Kalori" value={recipeData.macros.calories} unit="kcal" color="bg-orange-500" max={1000} icon={Flame} />
-                      <MacroBar label="Protein" value={recipeData.macros.protein} unit="g" color="bg-red-500" max={100} icon={Droplets} />
-                      <MacroBar label="Karb." value={recipeData.macros.carbs} unit="g" color="bg-yellow-500" max={100} icon={Wheat} />
-                      <MacroBar label="Yağ" value={recipeData.macros.fat} unit="g" color="bg-amber-500" max={100} icon={Droplets} />
+                      <MacroBar label="Kalori" value={recipeOptions[selectedRecipeIndex].macros.calories} unit="kcal" color="bg-orange-500" max={1000} icon={Flame} />
+                      <MacroBar label="Protein" value={recipeOptions[selectedRecipeIndex].macros.protein} unit="g" color="bg-red-500" max={100} icon={Droplets} />
+                      <MacroBar label="Karb." value={recipeOptions[selectedRecipeIndex].macros.carbs} unit="g" color="bg-yellow-500" max={100} icon={Wheat} />
+                      <MacroBar label="Yağ" value={recipeOptions[selectedRecipeIndex].macros.fat} unit="g" color="bg-amber-500" max={100} icon={Droplets} />
                     </div>
                   </div>
                 </div>
 
                 {/* Instructions */}
                 <div className="markdown-body border-t border-stone-100 dark:border-stone-700 pt-6">
-                  <Markdown>{recipeData.instructions}</Markdown>
+                  <Markdown>{recipeOptions[selectedRecipeIndex].instructions}</Markdown>
                 </div>
                 
                 <div className="mt-8 pt-6 border-t border-stone-100 dark:border-stone-700 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="text-sm text-stone-500 dark:text-stone-400">
-                    {recipeData.usedIngredients.length > 0 ? (
-                      <p>Kullanılan kiler malzemeleri: <span className="font-medium text-stone-700 dark:text-stone-300">{recipeData.usedIngredients.join(', ')}</span></p>
+                    {recipeOptions[selectedRecipeIndex].usedIngredients.length > 0 ? (
+                      <p>Kullanılan kiler malzemeleri: <span className="font-medium text-stone-700 dark:text-stone-300">{recipeOptions[selectedRecipeIndex].usedIngredients.join(', ')}</span></p>
                     ) : (
                       <p>Kilerinizden malzeme kullanılmadı.</p>
                     )}
