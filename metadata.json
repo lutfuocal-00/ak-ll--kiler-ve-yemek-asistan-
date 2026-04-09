@@ -1,0 +1,8 @@
+{
+  "name": "Akıllı Kiler ve Yemek Asistanı",
+  "description": "Ev hanımları ve yemek yapanlar için kilerdeki malzemelerle tarif üreten akıllı asistan.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
