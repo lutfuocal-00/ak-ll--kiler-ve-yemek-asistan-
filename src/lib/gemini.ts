@@ -4,7 +4,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function detectIngredientsFromImage(base64Data: string, mimeType: string) {
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-2.5-flash",
     contents: {
       parts: [
         {
@@ -64,73 +64,91 @@ export async function generateRecipe(
   prompt += `Beslenme Tercihi: ${dietaryPreference}\n`;
   prompt += `Ölçü Birimi: ${unitPreference}\n\n`;
 
-  prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 4 FARKLI yemek tarifi seçeneği sun. Tarifler birbirinden olabildiğince farklı olsun.
-ÖNEMLİ: Malzeme miktarlarında çok dikkatli ol. Yumurta, soğan, patates, diş sarımsak gibi adetle kullanılan malzemelerde ASLA 1.2, 0.5 gibi küsuratlı sayılar kullanma, daima tam sayı (1, 2, 3 vb.) kullan.
+  prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 4 FARKLI yemek tarifi seçeneği sun.
+ÖNEMLİ KURALLAR:
+1. HIZ İÇİN: Yapılış adımlarını (instructions) çok kısa, öz ve madde madde yaz. Uzun cümlelerden kaçın.
+2. KÜSURAT: Yumurta, soğan, patates, diş sarımsak gibi adetle kullanılan malzemelerde ASLA 1.2, 0.5 gibi küsuratlı sayılar kullanma, DAİMA tam sayı (1, 2, 3 vb.) kullan.
+
 JSON Formatı:
 "recipes" adında bir dizi (array) döndür. Her bir tarif objesi şu alanları içermeli:
 1. "title": Tarifin adı.
 2. "basePortion": Bu tarifin kaç kişilik olduğu (sayısal, örn: 2).
 3. "ingredients": Malzemeler listesi. Her biri için "name" (isim), "amount" (sayısal miktar, tam sayı olmalı), "unit" (birim: su bardağı, gram, adet vb.).
-4. "instructions": Yapılış adımları (Markdown formatında).
+4. "instructions": Yapılış adımları (Markdown formatında, kısa ve öz).
 5. "macros": 1 porsiyon için tahmini besin değerleri ("calories", "protein", "carbs", "fat" - hepsi sayısal).
 6. "usedIngredients": Eldeki malzemelerden (verilen listeden) tarifte kullanılanların tam isimlerini içeren bir dizi. Kullanılmadıysa boş dizi.`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          recipes: {
-            type: Type.ARRAY,
-            description: "Tam olarak 4 farklı yemek tarifi seçeneği.",
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                title: { type: Type.STRING },
-                basePortion: { type: Type.NUMBER },
-                ingredients: {
-                  type: Type.ARRAY,
-                  items: {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            recipes: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  basePortion: { type: Type.NUMBER },
+                  ingredients: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        name: { type: Type.STRING },
+                        amount: { type: Type.NUMBER },
+                        unit: { type: Type.STRING }
+                      },
+                      required: ["name", "amount", "unit"]
+                    }
+                  },
+                  instructions: { type: Type.STRING },
+                  macros: {
                     type: Type.OBJECT,
                     properties: {
-                      name: { type: Type.STRING },
-                      amount: { type: Type.NUMBER, description: "Miktar. Yumurta, soğan gibi sayılabilen şeyler için KESİNLİKLE tam sayı kullanın." },
-                      unit: { type: Type.STRING }
+                      calories: { type: Type.NUMBER },
+                      protein: { type: Type.NUMBER },
+                      carbs: { type: Type.NUMBER },
+                      fat: { type: Type.NUMBER }
                     },
-                    required: ["name", "amount", "unit"]
+                    required: ["calories", "protein", "carbs", "fat"]
+                  },
+                  usedIngredients: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
                   }
                 },
-                instructions: { type: Type.STRING },
-                macros: {
-                  type: Type.OBJECT,
-                  properties: {
-                    calories: { type: Type.NUMBER },
-                    protein: { type: Type.NUMBER },
-                    carbs: { type: Type.NUMBER },
-                    fat: { type: Type.NUMBER }
-                  },
-                  required: ["calories", "protein", "carbs", "fat"]
-                },
-                usedIngredients: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING }
-                }
-              },
-              required: ["title", "basePortion", "ingredients", "instructions", "macros", "usedIngredients"]
+                required: ["title", "basePortion", "ingredients", "instructions", "macros", "usedIngredients"]
+              }
             }
-          }
+          },
+          required: ["recipes"],
         },
-        required: ["recipes"],
       },
-    },
-  });
+    });
 
-  const text = response.text;
-  if (!text) throw new Error("Tarif oluşturulamadı.");
-  
-  const parsed = JSON.parse(text) as RecipeResponse;
-  return parsed.recipes;
+    let text = response.text;
+    if (!text) throw new Error("Tarif oluşturulamadı.");
+    
+    // Clean up potential markdown formatting if the model ignored responseMimeType
+    text = text.trim();
+    if (text.startsWith('```json')) {
+      text = text.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    } else if (text.startsWith('```')) {
+      text = text.replace(/^```\n?/, '').replace(/\n?```$/, '');
+    }
+    
+    const parsed = JSON.parse(text) as RecipeResponse;
+    if (!parsed.recipes || !Array.isArray(parsed.recipes)) {
+      throw new Error("Geçersiz JSON formatı: 'recipes' dizisi bulunamadı.");
+    }
+    return parsed.recipes;
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    throw error;
+  }
 }
