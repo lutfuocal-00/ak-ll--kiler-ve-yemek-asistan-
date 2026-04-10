@@ -105,8 +105,8 @@ export async function generateRecipe(
 
   prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 4 FARKLI yemek tarifi seçeneği sun.
 ÖNEMLİ KURALLAR:
-1. YANIT SÜRESİ ÇOK ÖNEMLİ: Mümkün olan en kısa sürede yanıt ver.
-2. HIZ İÇİN: Yapılış adımlarını (instructions) çok kısa, öz ve madde madde yaz. Uzun cümlelerden kaçın.
+1. YANIT SÜRESİ: Hızlı ve tutarlı yanıt ver.
+2. DETAYLI ANLATIM: Yapılış adımlarını (instructions) ASLA boş bırakma. Çok detaylı, adım adım yaz. Fırın kaç derece olacak, tavada kaç dakika pişecek, hangi kıvama gelene kadar karıştırılacak gibi tüm teknik detayları ve püf noktalarını mutlak suretle belirt. Usta bir şef gibi anlat.
 3. KÜSURAT: Yumurta, soğan, patates, diş sarımsak gibi adetle kullanılan malzemelerde ASLA 1.2, 0.5 gibi küsuratlı sayılar kullanma, DAİMA tam sayı (1, 2, 3 vb.) kullan.
 
 JSON Formatı:
@@ -114,7 +114,7 @@ JSON Formatı:
 1. "title": Tarifin adı.
 2. "basePortion": Bu tarifin kaç kişilik olduğu (sayısal, örn: 2).
 3. "ingredients": Malzemeler listesi. Her biri için "name" (isim), "amount" (sayısal miktar, tam sayı olmalı), "unit" (birim: su bardağı, gram, adet vb.).
-4. "instructions": Yapılış adımları (Markdown formatında, ÇOK KISA, en fazla 3 cümle).
+4. "instructions": Yapılış adımları (Markdown formatında, detaylı, adım adım, süre ve derece belirterek).
 5. "macros": 1 porsiyon için tahmini besin değerleri ("calories", "protein", "carbs", "fat" - hepsi sayısal).
 6. "usedIngredients": Eldeki malzemelerden (verilen listeden) tarifte kullanılanların tam isimlerini içeren bir dizi. Kullanılmadıysa boş dizi.`;
 
