@@ -106,15 +106,16 @@ export async function generateRecipe(
   prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 10 FARKLI yemek tarifi seçeneği sun.
 ÖNEMLİ KURALLAR:
 1. AŞÇILIK MANTIĞI VE LEZZET UYUMU (EN ÖNEMLİSİ): Asla birbiriyle alakasız malzemeleri zorla karıştırıp saçma sapan, yenmeyecek veya mantıksız tarifler uydurma. Tarifler gerçekçi, bilinen mutfak kültürlerine (özellikle Türk damak tadına) uygun olmalıdır.
-2. DOĞRU PİŞİRME SIRASI: Yapılış adımlarını (instructions) mantıklı bir sırayla yaz (Örn: Önce soğan kavrulur, sonra salça eklenir). Fırın kaç derece olacak, tavada kaç dakika pişecek, hangi kıvama gelene kadar karıştırılacak gibi tüm detayları usta bir şef gibi yaz. Asla boş bırakma.
-3. FİZİKSEL TUTARLILIK VE ÖLÇÜLER: Malzeme miktarları ile porsiyon sayısı birbiriyle tutarlı olsun. Yumurta, soğan, patates gibi adetle kullanılan malzemelerde ASLA 1.2, 0.5 gibi küsuratlı sayılar kullanma, DAİMA tam sayı (1, 2, 3) kullan.
-4. TARİF KALİTESİ: Sırf meyve suyu veya smoothie gibi çok basit şeylerden kaçın. Ancak eldeki malzemeler sadece tatlıya müsaitse zorla tuzlu yemek uydurma, harika bir tatlı yap. Eksikleri tamamlamak için evdeki temel malzemeleri (un, yağ, salça, soğan, sarımsak, tuz, su, baharat) eklemekten çekinme.
+2. DOĞRU PİŞİRME SIRASI: Yapılış adımlarını (instructions) mantıklı bir sırayla yaz (Örn: Önce soğan kavrulur, sonra salça eklenir). Fırın kaç derece olacak, tavada kaç dakika pişecek gibi tüm detayları usta bir şef gibi yaz. Asla boş bırakma.
+3. KÜSURAT KONTROLÜ: Yumurta, soğan, patates gibi "adet" ile kullanılan malzemelerde ASLA küsurat kullanma (tam sayı olsun). ANCAK su bardağı, çay bardağı, yemek kaşığı gibi ölçülerde buçuklu (0.5, 1.5) değerler KULLANABİLİRSİN.
+4. TARİF KALİTESİ: Sırf meyve suyu veya smoothie gibi çok basit şeylerden kaçın. Eksikleri tamamlamak için evdeki temel malzemeleri (un, yağ, salça, soğan, sarımsak, tuz, su, baharat) eklemekten çekinme.
+5. EV TİPİ ÖLÇÜLER (KULLANICI DENEYİMİ): İnsanların evinde hassas terazi olmadığını unutma! Gram veya mililitre (ml) gibi laboratuvar ölçüleri YERİNE, DAİMA "su bardağı", "çay bardağı", "yemek kaşığı", "tatlı kaşığı", "tutam" gibi ev tipi, pratik ölçü birimleri kullan. (Örn: 100 gram un yerine, 1 su bardağı un de).
 
 JSON Formatı:
 "recipes" adında bir dizi (array) döndür. Her bir tarif objesi şu alanları içermeli:
 1. "title": Tarifin adı.
 2. "basePortion": Bu tarifin kaç kişilik olduğu (sayısal, örn: 2).
-3. "ingredients": Malzemeler listesi. Her biri için "name" (isim), "amount" (sayısal miktar, tam sayı olmalı), "unit" (birim: su bardağı, gram, adet vb.).
+3. "ingredients": Malzemeler listesi. Her biri için "name" (isim), "amount" (sayısal miktar, Örn: 1, 2, 0.5), "unit" (birim: su bardağı, çay bardağı, yemek kaşığı, adet vb.).
 4. "instructions": Yapılış adımları (Markdown formatında, detaylı, doğru pişirme sırasıyla, süre ve derece belirterek).
 5. "macros": 1 porsiyon için tahmini besin değerleri ("calories", "protein", "carbs", "fat" - hepsi sayısal).
 6. "usedIngredients": Eldeki malzemelerden (verilen listeden) tarifte kullanılanların tam isimlerini içeren bir dizi. Kullanılmadıysa boş dizi.`;
