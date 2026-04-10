@@ -3,30 +3,47 @@ import { GoogleGenAI, Type } from "@google/genai";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function detectIngredientsFromImage(base64Data: string, mimeType: string) {
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: {
-      parts: [
-        {
-          inlineData: {
-            data: base64Data,
-            mimeType: mimeType,
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: base64Data,
+              mimeType: mimeType,
+            },
           },
-        },
-        {
-          text: "Bu fotoğraftaki tüm yiyecek ve malzemeleri tespit et, sadece isimlerini virgülle ayırarak döndür. Başka hiçbir açıklama, başlık veya kelime yazma. Sadece virgülle ayrılmış liste.",
-        },
-      ],
-    },
-  });
-  
-  const text = response.text;
-  if (!text) return [];
-  
-  return text.split(',')
-    .map(item => item.trim())
-    .filter(item => item.length > 0)
-    .map(item => item.charAt(0).toUpperCase() + item.slice(1).toLowerCase());
+          {
+            text: "Bu fotoğraftaki tüm yiyecek ve malzemeleri tespit et, sadece isimlerini virgülle ayırarak döndür. Başka hiçbir açıklama, başlık veya kelime yazma. Sadece virgülle ayrılmış liste.",
+          },
+        ],
+      },
+    });
+    
+    const text = response.text;
+    if (!text) return [];
+    
+    return text.split(',')
+      .map(item => item.trim())
+      .filter(item => item.length > 0)
+      .map(item => item.charAt(0).toUpperCase() + item.slice(1).toLowerCase());
+  } catch (error: any) {
+    const isQuotaError = 
+      error?.message?.includes('429') || 
+      error?.status === 429 || 
+      error?.toString().includes('quota') || 
+      error?.toString().includes('RESOURCE_EXHAUSTED') ||
+      error?.error?.code === 429 ||
+      error?.error?.status === 'RESOURCE_EXHAUSTED';
+      
+    if (isQuotaError) {
+      throw new Error("Şu anda sistemde yoğunluk var, lütfen daha sonra tekrar deneyin.");
+    }
+    
+    console.error("Gemini API Error (Image):", error);
+    throw error;
+  }
 }
 
 export interface RecipeData {
@@ -66,15 +83,16 @@ export async function generateRecipe(
 
   prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 4 FARKLI yemek tarifi seçeneği sun.
 ÖNEMLİ KURALLAR:
-1. HIZ İÇİN: Yapılış adımlarını (instructions) çok kısa, öz ve madde madde yaz. Uzun cümlelerden kaçın.
-2. KÜSURAT: Yumurta, soğan, patates, diş sarımsak gibi adetle kullanılan malzemelerde ASLA 1.2, 0.5 gibi küsuratlı sayılar kullanma, DAİMA tam sayı (1, 2, 3 vb.) kullan.
+1. YANIT SÜRESİ ÇOK ÖNEMLİ: Mümkün olan en kısa sürede yanıt ver.
+2. HIZ İÇİN: Yapılış adımlarını (instructions) çok kısa, öz ve madde madde yaz. Uzun cümlelerden kaçın.
+3. KÜSURAT: Yumurta, soğan, patates, diş sarımsak gibi adetle kullanılan malzemelerde ASLA 1.2, 0.5 gibi küsuratlı sayılar kullanma, DAİMA tam sayı (1, 2, 3 vb.) kullan.
 
 JSON Formatı:
 "recipes" adında bir dizi (array) döndür. Her bir tarif objesi şu alanları içermeli:
 1. "title": Tarifin adı.
 2. "basePortion": Bu tarifin kaç kişilik olduğu (sayısal, örn: 2).
 3. "ingredients": Malzemeler listesi. Her biri için "name" (isim), "amount" (sayısal miktar, tam sayı olmalı), "unit" (birim: su bardağı, gram, adet vb.).
-4. "instructions": Yapılış adımları (Markdown formatında, kısa ve öz).
+4. "instructions": Yapılış adımları (Markdown formatında, ÇOK KISA, en fazla 3 cümle).
 5. "macros": 1 porsiyon için tahmini besin değerleri ("calories", "protein", "carbs", "fat" - hepsi sayısal).
 6. "usedIngredients": Eldeki malzemelerden (verilen listeden) tarifte kullanılanların tam isimlerini içeren bir dizi. Kullanılmadıysa boş dizi.`;
 
@@ -147,7 +165,19 @@ JSON Formatı:
       throw new Error("Geçersiz JSON formatı: 'recipes' dizisi bulunamadı.");
     }
     return parsed.recipes;
-  } catch (error) {
+  } catch (error: any) {
+    const isQuotaError = 
+      error?.message?.includes('429') || 
+      error?.status === 429 || 
+      error?.toString().includes('quota') || 
+      error?.toString().includes('RESOURCE_EXHAUSTED') ||
+      error?.error?.code === 429 ||
+      error?.error?.status === 'RESOURCE_EXHAUSTED';
+      
+    if (isQuotaError) {
+      throw new Error("Şu anda sistemde yoğunluk var, lütfen daha sonra tekrar deneyin.");
+    }
+    
     console.error("Gemini API Error:", error);
     throw error;
   }
