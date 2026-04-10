@@ -103,11 +103,12 @@ export async function generateRecipe(
   prompt += `Beslenme Tercihi: ${dietaryPreference}\n`;
   prompt += `Ölçü Birimi: ${unitPreference}\n\n`;
 
-  prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 4 FARKLI yemek tarifi seçeneği sun.
+  prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 10 FARKLI yemek tarifi seçeneği sun.
 ÖNEMLİ KURALLAR:
 1. YANIT SÜRESİ: Hızlı ve tutarlı yanıt ver.
 2. DETAYLI ANLATIM: Yapılış adımlarını (instructions) ASLA boş bırakma. Çok detaylı, adım adım yaz. Fırın kaç derece olacak, tavada kaç dakika pişecek, hangi kıvama gelene kadar karıştırılacak gibi tüm teknik detayları ve püf noktalarını mutlak suretle belirt. Usta bir şef gibi anlat.
 3. KÜSURAT: Yumurta, soğan, patates, diş sarımsak gibi adetle kullanılan malzemelerde ASLA 1.2, 0.5 gibi küsuratlı sayılar kullanma, DAİMA tam sayı (1, 2, 3 vb.) kullan.
+4. TARİF KALİTESİ VE ÇEŞİTLİLİK (ÇOK ÖNEMLİ): Asla iki malzemeli basit atıştırmalıklar, meyve suyu veya smoothie gibi kolaya kaçan tarifler verme. Doyurucu ana yemekler, fırın yemekleri, sulu yemekler, yaratıcı ara sıcaklar veya gerçek tatlı tarifleri üret. 4 tarifin hepsi birbirinden tamamen farklı tarzda olsun.
 
 JSON Formatı:
 "recipes" adında bir dizi (array) döndür. Her bir tarif objesi şu alanları içermeli:
