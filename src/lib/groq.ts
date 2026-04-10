@@ -103,22 +103,22 @@ export async function generateRecipe(
   prompt += `Beslenme Tercihi: ${dietaryPreference}\n`;
   prompt += `Ölçü Birimi: ${unitPreference}\n\n`;
 
-  prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 10 FARKLI yemek tarifi seçeneği sun.
+  prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 4 FARKLI yemek tarifi seçeneği sun.
 ÖNEMLİ KURALLAR:
-1. AŞÇILIK MANTIĞI VE LEZZET UYUMU (EN ÖNEMLİSİ): Asla birbiriyle alakasız malzemeleri zorla karıştırıp saçma sapan, yenmeyecek veya mantıksız tarifler uydurma. Tarifler gerçekçi, bilinen mutfak kültürlerine (özellikle Türk damak tadına) uygun olmalıdır.
-2. DOĞRU PİŞİRME SIRASI: Yapılış adımlarını (instructions) mantıklı bir sırayla yaz (Örn: Önce soğan kavrulur, sonra salça eklenir). Fırın kaç derece olacak, tavada kaç dakika pişecek gibi tüm detayları usta bir şef gibi yaz. Asla boş bırakma.
-3. KÜSURAT KONTROLÜ: Yumurta, soğan, patates gibi "adet" ile kullanılan malzemelerde ASLA küsurat kullanma (tam sayı olsun). ANCAK su bardağı, çay bardağı, yemek kaşığı gibi ölçülerde buçuklu (0.5, 1.5) değerler KULLANABİLİRSİN.
-4. TARİF KALİTESİ: Sırf meyve suyu veya smoothie gibi çok basit şeylerden kaçın. Eksikleri tamamlamak için evdeki temel malzemeleri (un, yağ, salça, soğan, sarımsak, tuz, su, baharat) eklemekten çekinme.
-5. EV TİPİ ÖLÇÜLER (KULLANICI DENEYİMİ): İnsanların evinde hassas terazi olmadığını unutma! Gram veya mililitre (ml) gibi laboratuvar ölçüleri YERİNE, DAİMA "su bardağı", "çay bardağı", "yemek kaşığı", "tatlı kaşığı", "tutam" gibi ev tipi, pratik ölçü birimleri kullan. (Örn: 100 gram un yerine, 1 su bardağı un de).
+1. AŞÇILIK MANTIĞI VE LEZZET UYUMU: Asla birbiriyle alakasız malzemeleri karıştırıp mantıksız tarifler uydurma. Tarifler gerçekçi ve Türk damak tadına uygun olmalıdır.
+2. DESTANSI DETAY: Yapılış adımlarını (instructions) ASLA kısa kesme. Her tarifin yapılışı EN AZ 5-6 MADDELİK uzun ve detaylı bir rehber olmalıdır. Fırın kaç derece olacak, tavada kaç dakika pişecek, adım adım usta bir şef gibi anlat.
+3. KÜSURAT KONTROLÜ: Yumurta, soğan gibi "adet" olanlarda küsurat kullanma. Su bardağı, kaşık gibi ölçülerde buçuklu (0.5, 1.5) kullanabilirsin.
+4. GERÇEKÇİ VE EMEK İSTEYEN TARİFLER (AŞIRI ÖNEMLİ): Kesinlikle "ekmeğe çikolata sür", "meyveleri doğra karıştır", "sandviç yap" gibi pişirme gerektirmeyen, tembel ve basit atıştırmalıklar YAZMA. Kullanıcı tatlı veya yemek istiyorsa; ocakta kaynayan, tavada kızaran veya fırınlanan GERÇEK mutfak tarifleri ver. Eksikleri tamamlamak için evdeki temel malzemeleri (un, şeker, sıvı yağ, tereyağı, kabartma tozu, vanilya, süt, salça, soğan) kullanarak adamakıllı hamur işleri, sütlü tatlılar veya tencere yemekleri kurgula.
+5. EV TİPİ ÖLÇÜLER: Gram veya ml kullanma; DAİMA "su bardağı", "kaşık", "tutam" gibi pratik ölçüler kullan.
 
 JSON Formatı:
-"recipes" adında bir dizi (array) döndür. Her bir tarif objesi şu alanları içermeli:
-1. "title": Tarifin adı.
-2. "basePortion": Bu tarifin kaç kişilik olduğu (sayısal, örn: 2).
-3. "ingredients": Malzemeler listesi. Her biri için "name" (isim), "amount" (sayısal miktar, Örn: 1, 2, 0.5), "unit" (birim: su bardağı, çay bardağı, yemek kaşığı, adet vb.).
-4. "instructions": Yapılış adımları (Markdown formatında, detaylı, doğru pişirme sırasıyla, süre ve derece belirterek).
-5. "macros": 1 porsiyon için tahmini besin değerleri ("calories", "protein", "carbs", "fat" - hepsi sayısal).
-6. "usedIngredients": Eldeki malzemelerden (verilen listeden) tarifte kullanılanların tam isimlerini içeren bir dizi. Kullanılmadıysa boş dizi.`;
+"recipes" adında bir dizi döndür. Objeler şunları içermeli:
+1. "title": Tarif adı.
+2. "basePortion": Kaç kişilik (sayısal).
+3. "ingredients": Malzemeler (name, amount, unit).
+4. "instructions": Yapılış adımları. (DİKKAT: Markdown formatında, EN AZ 5 madde, adım adım, uzun cümlelerle, süre ve sıcaklık mutlaka belirtilmiş destansı bir metin olmalı. Asla özet geçme).
+5. "macros": Besin değerleri (calories, protein, carbs, fat).
+6. "usedIngredients": Kullanılan ana malzemeler listesi.`;
 
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
