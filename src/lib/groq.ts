@@ -103,7 +103,7 @@ export async function generateRecipe(
   prompt += `Beslenme Tercihi: ${dietaryPreference}\n`;
   prompt += `Ölçü Birimi: ${unitPreference}\n\n`;
 
-  prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 4 FARKLI yemek tarifi seçeneği sun.
+  prompt += `Lütfen cevabını JSON formatında ver ve tam olarak 10 FARKLI yemek tarifi seçeneği sun.
 ÖNEMLİ KURALLAR:
 1. AŞÇILIK MANTIĞI VE LEZZET UYUMU: Asla birbiriyle alakasız malzemeleri karıştırıp mantıksız tarifler uydurma. Tarifler gerçekçi ve Türk damak tadına uygun olmalıdır.
 2. DESTANSI DETAY: Yapılış adımlarını (instructions) ASLA kısa kesme. Her tarifin yapılışı EN AZ 5-6 MADDELİK uzun ve detaylı bir rehber olmalıdır. Fırın kaç derece olacak, tavada kaç dakika pişecek, adım adım usta bir şef gibi anlat.
