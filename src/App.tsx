@@ -3,7 +3,7 @@ import { Plus, Trash2, ChefHat, Search, CheckCircle2, Utensils, Coffee, Sun, Moo
 import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'motion/react';
-import { generateRecipe, detectIngredientsFromImage, RecipeData } from './lib/gemini';
+import { generateRecipe, detectIngredientsFromImage, RecipeData } from './lib/groq';
 
 const INGREDIENT_DB = [
   // Sebzeler & Yeşillikler
